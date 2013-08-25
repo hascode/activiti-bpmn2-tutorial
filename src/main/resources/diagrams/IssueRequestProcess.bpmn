@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="issueRequestProcess" name="Issue Request Process" isExecutable="true">
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <userTask id="userEnterssNewIssue" name="User enters new issue" activiti:assignee="kermit" activiti:formKey="newIssueForm">
+      <extensionElements>
+        <activiti:formProperty id="summary" name="Issue Summary" type="string" variable="summary" required="true"></activiti:formProperty>
+        <activiti:formProperty id="description" name="Detailed Issue Description" type="string" variable="description"></activiti:formProperty>
+        <activiti:formProperty id="priority" name="Issue Priority" type="enum" variable="priority" required="true">
+          <activiti:value id="low" name="low"></activiti:value>
+          <activiti:value id="medium" name="medium"></activiti:value>
+          <activiti:value id="critical" name="critical"></activiti:value>
+        </activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="userEnterssNewIssue"></sequenceFlow>
+    <userTask id="approveNormalIssue" name="Approve non-critical Issue" activiti:assignee="kermit">
+      <extensionElements>
+        <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" writable="false" required="true"></activiti:formProperty>
+        <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="priority" name="Priority" type="string" expression="${priority}" writable="false" required="true"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow5" sourceRef="userEnterssNewIssue" targetRef="exclusivegateway1"></sequenceFlow>
+    <userTask id="approveCriticalIssue" name="Approve Critical Issue" activiti:assignee="kermit">
+      <extensionElements>
+        <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" writable="false" required="true"></activiti:formProperty>
+        <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" writable="false"></activiti:formProperty>
+        <activiti:formProperty id="priority" name="Priority" type="string" expression="${priority}" writable="false" required="true"></activiti:formProperty>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="criticalFlow" sourceRef="exclusivegateway1" targetRef="approveCriticalIssue">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${priority == "critical"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow7" sourceRef="exclusivegateway1" targetRef="approveNormalIssue">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${priority != "critical"}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow8" sourceRef="approveCriticalIssue" targetRef="exclusivegateway2"></sequenceFlow>
+    <sequenceFlow id="flow9" sourceRef="approveNormalIssue" targetRef="exclusivegateway2"></sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="exclusivegateway2" targetRef="endevent1"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_issueRequestProcess">
+    <bpmndi:BPMNPlane bpmnElement="issueRequestProcess" id="BPMNPlane_issueRequestProcess">
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="90.0" y="200.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="700.0" y="200.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="userEnterssNewIssue" id="BPMNShape_userEnterssNewIssue">
+        <omgdc:Bounds height="55.0" width="105.0" x="190.0" y="190.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask1" id="BPMNShape_usertask1">
+        <omgdc:Bounds height="55.0" width="105.0" x="450.0" y="190.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="approveNormalIssue" id="BPMNShape_approveNormalIssue">
+        <omgdc:Bounds height="55.0" width="105.0" x="450.0" y="244.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="350.0" y="197.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="usertask2" id="BPMNShape_usertask2">
+        <omgdc:Bounds height="55.0" width="105.0" x="450.0" y="146.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="approveCriticalIssue" id="BPMNShape_approveCriticalIssue">
+        <omgdc:Bounds height="55.0" width="105.0" x="450.0" y="146.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway2" id="BPMNShape_exclusivegateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="610.0" y="197.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="125.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="190.0" y="217.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="295.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="350.0" y="217.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="370.0" y="197.0"></omgdi:waypoint>
+        <omgdi:waypoint x="370.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="450.0" y="173.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow7" id="BPMNEdge_flow7">
+        <omgdi:waypoint x="370.0" y="237.0"></omgdi:waypoint>
+        <omgdi:waypoint x="370.0" y="271.0"></omgdi:waypoint>
+        <omgdi:waypoint x="450.0" y="271.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="555.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="630.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="630.0" y="197.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="555.0" y="271.0"></omgdi:waypoint>
+        <omgdi:waypoint x="630.0" y="271.0"></omgdi:waypoint>
+        <omgdi:waypoint x="630.0" y="237.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="650.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="700.0" y="217.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="criticalFlow" id="BPMNEdge_criticalFlow">
+        <omgdi:waypoint x="370.0" y="197.0"></omgdi:waypoint>
+        <omgdi:waypoint x="370.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="450.0" y="173.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
