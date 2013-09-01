@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
   <process id="issueRequestProcess" name="Issue Request Process" isExecutable="true">
-    <startEvent id="startevent1" name="Start"></startEvent>
+    <startEvent id="startevent1" name="Start" activiti:initiator="initiator"></startEvent>
     <endEvent id="endevent1" name="End"></endEvent>
-    <userTask id="userEnterssNewIssue" name="User enters new issue" activiti:assignee="kermit" activiti:formKey="newIssueForm">
+    <userTask id="userEnterssNewIssue" name="User enters new issue" activiti:assignee="${initiator}" activiti:formKey="newIssueForm">
       <extensionElements>
         <activiti:formProperty id="summary" name="Issue Summary" type="string" variable="summary" required="true"></activiti:formProperty>
         <activiti:formProperty id="description" name="Detailed Issue Description" type="string" variable="description"></activiti:formProperty>
@@ -12,6 +12,7 @@
           <activiti:value id="medium" name="medium"></activiti:value>
           <activiti:value id="critical" name="critical"></activiti:value>
         </activiti:formProperty>
+        <activiti:formProperty id="email" name="Please enter your E-Mail address for feedback" type="string" variable="email" required="true"></activiti:formProperty>
       </extensionElements>
     </userTask>
     <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="userEnterssNewIssue"></sequenceFlow>
@@ -50,9 +51,52 @@
     <sequenceFlow id="flow9" sourceRef="approveNormalIssue" targetRef="exclusivegateway2"></sequenceFlow>
     <serviceTask id="storeIssueTask" name="Persist Issue to IssueTracker" activiti:class="com.hascode.tutorial.PersistIssueTask"></serviceTask>
     <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
-    <sequenceFlow id="flow12" sourceRef="exclusivegateway2" targetRef="exclusivegateway3"></sequenceFlow>
-    <serviceTask id="denialMailTask" name="Send denial mail" activiti:type="mail"></serviceTask>
-    <serviceTask id="confirmMailTask" name="Send confirmation mail" activiti:type="mail"></serviceTask>
+    <serviceTask id="denialMailTask" name="Send denial mail" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression>${email}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string>support@hascode.com</activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression>Your inquiry regarding ${summary}was denied</activiti:expression>
+        </activiti:field>
+        <activiti:field name="charset">
+          <activiti:string>UTF-8</activiti:string>
+        </activiti:field>
+        <activiti:field name="text">
+          <activiti:expression>Hi ${initiator},
+
+your issue regarding ${summary}has been denied.
+
+Best regards</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
+    <serviceTask id="confirmMailTask" name="Send confirmation mail" activiti:type="mail">
+      <extensionElements>
+        <activiti:field name="to">
+          <activiti:expression>${email}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="from">
+          <activiti:string>support@hascode.com</activiti:string>
+        </activiti:field>
+        <activiti:field name="subject">
+          <activiti:expression>Your inquiry regarding ${summary}</activiti:expression>
+        </activiti:field>
+        <activiti:field name="charset">
+          <activiti:string>UTF-8</activiti:string>
+        </activiti:field>
+        <activiti:field name="text">
+          <activiti:expression>Hi ${initiator},
+
+your issue regarding ${summary} is being processed right now and you'll receive an update regarding this issue soon from our dev team.
+
+Best regards</activiti:expression>
+        </activiti:field>
+      </extensionElements>
+    </serviceTask>
     <sequenceFlow id="flow13" sourceRef="exclusivegateway3" targetRef="confirmMailTask">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${requestApproved == "true"}]]></conditionExpression>
     </sequenceFlow>
@@ -62,6 +106,19 @@
     <sequenceFlow id="flow15" sourceRef="confirmMailTask" targetRef="storeIssueTask"></sequenceFlow>
     <sequenceFlow id="flow16" sourceRef="storeIssueTask" targetRef="endevent1"></sequenceFlow>
     <sequenceFlow id="flow17" sourceRef="denialMailTask" targetRef="endevent1"></sequenceFlow>
+    <scriptTask id="swearWordFilterScriptTask" name="Swear Word Filter Script Task" scriptFormat="groovy" activiti:autoStoreVariables="true">
+      <script>def badwords = 'fuck|bla'
+def replacement = 'xxx'
+
+def filteredSummary = summary.replaceAll(badwords, replacement)
+def filteredDescription = description.replaceAll(badwords, replacement)
+
+execution.setVariable('summary', filteredSummary)
+execution.setVariable('description', filteredDescription)
+</script>
+    </scriptTask>
+    <sequenceFlow id="flow18" sourceRef="exclusivegateway2" targetRef="swearWordFilterScriptTask"></sequenceFlow>
+    <sequenceFlow id="flow19" sourceRef="swearWordFilterScriptTask" targetRef="exclusivegateway3"></sequenceFlow>
   </process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_issueRequestProcess">
     <bpmndi:BPMNPlane bpmnElement="issueRequestProcess" id="BPMNPlane_issueRequestProcess">
@@ -69,7 +126,7 @@
         <omgdc:Bounds height="35.0" width="35.0" x="90.0" y="200.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
-        <omgdc:Bounds height="35.0" width="35.0" x="1090.0" y="200.0"></omgdc:Bounds>
+        <omgdc:Bounds height="35.0" width="35.0" x="1240.0" y="200.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="userEnterssNewIssue" id="BPMNShape_userEnterssNewIssue">
         <omgdc:Bounds height="55.0" width="105.0" x="190.0" y="190.0"></omgdc:Bounds>
@@ -87,16 +144,19 @@
         <omgdc:Bounds height="40.0" width="40.0" x="610.0" y="197.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="storeIssueTask" id="BPMNShape_storeIssueTask">
-        <omgdc:Bounds height="55.0" width="105.0" x="910.0" y="146.0"></omgdc:Bounds>
+        <omgdc:Bounds height="55.0" width="105.0" x="1060.0" y="146.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="exclusivegateway3" id="BPMNShape_exclusivegateway3">
-        <omgdc:Bounds height="40.0" width="40.0" x="700.0" y="197.0"></omgdc:Bounds>
+        <omgdc:Bounds height="40.0" width="40.0" x="850.0" y="197.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="denialMailTask" id="BPMNShape_denialMailTask">
-        <omgdc:Bounds height="55.0" width="105.0" x="760.0" y="230.0"></omgdc:Bounds>
+        <omgdc:Bounds height="55.0" width="105.0" x="910.0" y="230.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="confirmMailTask" id="BPMNShape_confirmMailTask">
-        <omgdc:Bounds height="55.0" width="105.0" x="760.0" y="146.0"></omgdc:Bounds>
+        <omgdc:Bounds height="55.0" width="105.0" x="910.0" y="146.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="swearWordFilterScriptTask" id="BPMNShape_swearWordFilterScriptTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="700.0" y="190.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
         <omgdi:waypoint x="125.0" y="217.0"></omgdi:waypoint>
@@ -126,38 +186,37 @@
         <omgdi:waypoint x="370.0" y="173.0"></omgdi:waypoint>
         <omgdi:waypoint x="450.0" y="173.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="870.0" y="197.0"></omgdi:waypoint>
+        <omgdi:waypoint x="870.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="910.0" y="173.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
+        <omgdi:waypoint x="1015.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1060.0" y="173.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
+        <omgdi:waypoint x="1165.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1257.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1257.0" y="200.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
+        <omgdi:waypoint x="1015.0" y="257.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1257.0" y="257.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1257.0" y="235.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="denialFlow" id="BPMNEdge_denialFlow">
+        <omgdi:waypoint x="870.0" y="237.0"></omgdi:waypoint>
+        <omgdi:waypoint x="870.0" y="257.0"></omgdi:waypoint>
+        <omgdi:waypoint x="910.0" y="257.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow18" id="BPMNEdge_flow18">
         <omgdi:waypoint x="650.0" y="217.0"></omgdi:waypoint>
         <omgdi:waypoint x="700.0" y="217.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
-        <omgdi:waypoint x="720.0" y="197.0"></omgdi:waypoint>
-        <omgdi:waypoint x="720.0" y="173.0"></omgdi:waypoint>
-        <omgdi:waypoint x="760.0" y="173.0"></omgdi:waypoint>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
-        <omgdi:waypoint x="720.0" y="237.0"></omgdi:waypoint>
-        <omgdi:waypoint x="720.0" y="257.0"></omgdi:waypoint>
-        <omgdi:waypoint x="760.0" y="257.0"></omgdi:waypoint>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow15" id="BPMNEdge_flow15">
-        <omgdi:waypoint x="865.0" y="173.0"></omgdi:waypoint>
-        <omgdi:waypoint x="910.0" y="173.0"></omgdi:waypoint>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow16" id="BPMNEdge_flow16">
-        <omgdi:waypoint x="1015.0" y="173.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1107.0" y="173.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1107.0" y="200.0"></omgdi:waypoint>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="flow17" id="BPMNEdge_flow17">
-        <omgdi:waypoint x="865.0" y="257.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1107.0" y="257.0"></omgdi:waypoint>
-        <omgdi:waypoint x="1107.0" y="235.0"></omgdi:waypoint>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge bpmnElement="denialFlow" id="BPMNEdge_denialFlow">
-        <omgdi:waypoint x="720.0" y="237.0"></omgdi:waypoint>
-        <omgdi:waypoint x="720.0" y="257.0"></omgdi:waypoint>
-        <omgdi:waypoint x="760.0" y="257.0"></omgdi:waypoint>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="805.0" y="217.0"></omgdi:waypoint>
+        <omgdi:waypoint x="850.0" y="217.0"></omgdi:waypoint>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
