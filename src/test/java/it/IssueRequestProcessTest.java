@@ -2,12 +2,18 @@ package it;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.activiti.engine.FormService;
 import org.activiti.engine.form.FormProperty;
+import org.activiti.engine.history.HistoricDetail;
+import org.activiti.engine.history.HistoricFormProperty;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
@@ -15,6 +21,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public class IssueRequestProcessTest {
+	private static final String DESCRIPTION_VALUE = "When I'm adding articles to the basket and click on 'buy' I'm getting a 404 error. I hate your fucking shop!";
+	private static final String DESCRIPTION_KEY = "description";
+	private static final String SUMMARY_VALUE = "Website Error! Shop order failed";
+	private static final String SUMMARY_KEY = "summary";
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule(
 			"activiti-test.inmemory-cfg.xml");
@@ -31,5 +41,25 @@ public class IssueRequestProcessTest {
 		List<FormProperty> formProps = formService.getStartFormData(
 				definition.getId()).getFormProperties();
 		assertThat(formProps.size(), equalTo(4));
+
+		Map<String, String> requestFormProps = new HashMap<String, String>();
+		requestFormProps.put(SUMMARY_KEY, SUMMARY_VALUE);
+		requestFormProps.put(DESCRIPTION_KEY, DESCRIPTION_VALUE);
+		requestFormProps.put("email", "someguy@hascode.com");
+		requestFormProps.put("priority", "critical");
+
+		Date startDate = new Date();
+		formService.submitStartFormData(definition.getId(), requestFormProps);
+
+		List<HistoricDetail> historicFormProps = activitiRule
+				.getHistoryService().createHistoricDetailQuery()
+				.formProperties().orderByVariableName().asc().list();
+		assertThat(historicFormProps.size(), equalTo(4));
+		HistoricFormProperty historicSummary = (HistoricFormProperty) historicFormProps
+				.get(0);
+		assertThat(historicSummary.getPropertyId(), equalTo(DESCRIPTION_KEY));
+		assertThat(historicSummary.getPropertyValue(),
+				equalTo(DESCRIPTION_VALUE));
+		assertThat(historicSummary.getTime(), greaterThan(startDate));
 	}
 }
