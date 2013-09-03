@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.activiti.engine.FormService;
+import org.activiti.engine.TaskService;
 import org.activiti.engine.form.FormProperty;
 import org.activiti.engine.history.HistoricDetail;
 import org.activiti.engine.history.HistoricFormProperty;
 import org.activiti.engine.repository.ProcessDefinition;
+import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.Task;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
 import org.junit.Rule;
@@ -49,7 +52,9 @@ public class IssueRequestProcessTest {
 		requestFormProps.put("priority", "critical");
 
 		Date startDate = new Date();
-		formService.submitStartFormData(definition.getId(), requestFormProps);
+		ProcessInstance processInstance = formService.submitStartFormData(
+				definition.getId(), requestFormProps);
+		assertThat(processInstance, notNullValue());
 
 		List<HistoricDetail> historicFormProps = activitiRule
 				.getHistoryService().createHistoricDetailQuery()
@@ -61,5 +66,12 @@ public class IssueRequestProcessTest {
 		assertThat(historicSummary.getPropertyValue(),
 				equalTo(DESCRIPTION_VALUE));
 		assertThat(historicSummary.getTime(), greaterThan(startDate));
+
+		TaskService taskService = activitiRule.getTaskService();
+		Task approveCriticalIssueTask = taskService.createTaskQuery()
+				.processInstanceId(processInstance.getProcessInstanceId())
+				.singleResult();
+		assertThat(approveCriticalIssueTask.getName(),
+				equalTo("Approve Critical Issue"));
 	}
 }
