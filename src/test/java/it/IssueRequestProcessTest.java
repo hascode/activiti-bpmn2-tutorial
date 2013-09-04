@@ -73,5 +73,8 @@ public class IssueRequestProcessTest {
 				.singleResult();
 		assertThat(approveCriticalIssueTask.getName(),
 				equalTo("Approve Critical Issue"));
+		Map<String, Object> taskParams = new HashMap<String, Object>();
+		taskParams.put("requestApproved", "true");
+		taskService.complete(approveCriticalIssueTask.getId(), taskParams);
 	}
 }
