@@ -1,6 +1,7 @@
 package it;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
@@ -66,6 +67,12 @@ public class IssueRequestProcessTest {
 		assertThat(historicSummary.getPropertyValue(),
 				equalTo(DESCRIPTION_VALUE));
 		assertThat(historicSummary.getTime(), greaterThan(startDate));
+
+		assertThat(
+				(String) activitiRule.getRuntimeService()
+						.getVariable(processInstance.getProcessInstanceId(),
+								DESCRIPTION_KEY),
+				endsWith("I hate your xxxing shop!"));
 
 		TaskService taskService = activitiRule.getTaskService();
 		Task approveCriticalIssueTask = taskService.createTaskQuery()
