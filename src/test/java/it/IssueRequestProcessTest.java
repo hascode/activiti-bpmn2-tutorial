@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.Message;
 import javax.mail.internet.MimeMessage;
 
 import org.activiti.engine.FormService;
@@ -112,5 +113,7 @@ public class IssueRequestProcessTest {
 		assertThat(mail.getSubject(), equalTo("Your inquiry regarding "
 				+ SUMMARY_VALUE));
 		assertThat((String) mail.getContent(), containsString(SUMMARY_VALUE));
+		assertThat(mail.getRecipients(Message.RecipientType.TO)[0].toString(),
+				equalTo("\"someguy@hascode.com\" <someguy@hascode.com>"));
 	}
 }
