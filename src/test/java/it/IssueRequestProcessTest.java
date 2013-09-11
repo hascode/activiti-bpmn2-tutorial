@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
 
+import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +40,9 @@ public class IssueRequestProcessTest {
 	private static final String DESCRIPTION_KEY = "description";
 	private static final String SUMMARY_VALUE = "Website Error! Shop order failed";
 	private static final String SUMMARY_KEY = "summary";
+
+	File issueTracker = new File(
+			new File(System.getProperty("java.io.tmpdir")), "issues.txt");
 
 	GreenMail smtpServer = new GreenMail(ServerSetupTest.SMTP);
 
@@ -115,5 +120,10 @@ public class IssueRequestProcessTest {
 		assertThat((String) mail.getContent(), containsString(SUMMARY_VALUE));
 		assertThat(mail.getRecipients(Message.RecipientType.TO)[0].toString(),
 				equalTo("\"someguy@hascode.com\" <someguy@hascode.com>"));
+
+		assertThat(issueTracker.exists(), equalTo(true));
+		assertThat(
+				FileUtils.readFileToString(issueTracker),
+				containsString("Description: When I'm adding articles to the basket and click on 'buy' I'm getting a 404 error. I hate your xxxing shop!"));
 	}
 }

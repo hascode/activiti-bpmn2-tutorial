@@ -8,7 +8,8 @@ import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.JavaDelegate;
 
 public class PersistIssueTask implements JavaDelegate {
-	private final File issueTracker = new File("/tmp/issues.txt");
+	private final File issueTracker = new File(new File(
+			System.getProperty("java.io.tmpdir")), "issues.txt");
 
 	@Override
 	public void execute(final DelegateExecution execution) throws Exception {
