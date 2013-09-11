@@ -1,6 +1,7 @@
 package it;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -10,6 +11,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.mail.internet.MimeMessage;
 
 import org.activiti.engine.FormService;
 import org.activiti.engine.TaskService;
@@ -21,21 +24,39 @@ import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.test.ActivitiRule;
 import org.activiti.engine.test.Deployment;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import com.icegreen.greenmail.util.GreenMail;
+import com.icegreen.greenmail.util.ServerSetupTest;
 
 public class IssueRequestProcessTest {
 	private static final String DESCRIPTION_VALUE = "When I'm adding articles to the basket and click on 'buy' I'm getting a 404 error. I hate your fucking shop!";
 	private static final String DESCRIPTION_KEY = "description";
 	private static final String SUMMARY_VALUE = "Website Error! Shop order failed";
 	private static final String SUMMARY_KEY = "summary";
+
+	GreenMail smtpServer = new GreenMail(ServerSetupTest.SMTP);
+
 	@Rule
 	public ActivitiRule activitiRule = new ActivitiRule(
 			"activiti-test.inmemory-cfg.xml");
 
+	@Before
+	public void setUp() {
+		smtpServer.start();
+	}
+
+	@After
+	public void tearDown() {
+		smtpServer.stop();
+	}
+
 	@Test
 	@Deployment(resources = "diagrams/IssueRequestProcess.bpmn")
-	public void shouldProcessCriticalIssueRequest() {
+	public void shouldProcessCriticalIssueRequest() throws Exception {
 		ProcessDefinition definition = activitiRule.getRepositoryService()
 				.createProcessDefinitionQuery()
 				.processDefinitionKey("issueRequestProcess").singleResult();
@@ -83,5 +104,13 @@ public class IssueRequestProcessTest {
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put("requestApproved", "true");
 		taskService.complete(approveCriticalIssueTask.getId(), taskParams);
+
+		smtpServer.waitForIncomingEmail(5000L, 1);
+		MimeMessage[] messages = smtpServer.getReceivedMessages();
+		assertThat(messages.length, equalTo(1));
+		MimeMessage mail = messages[0];
+		assertThat(mail.getSubject(), equalTo("Your inquiry regarding "
+				+ SUMMARY_VALUE));
+		assertThat((String) mail.getContent(), containsString(SUMMARY_VALUE));
 	}
 }

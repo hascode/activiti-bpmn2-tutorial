@@ -5,7 +5,7 @@
 	<bean id="processEngineConfiguration"
 		class="org.activiti.engine.impl.cfg.StandaloneInMemProcessEngineConfiguration">
 		<property name="databaseSchemaUpdate" value="true" />
-		<property name="mailServerPort" value="1025" />
+		<property name="mailServerPort" value="3025" />
 		<property name="jobExecutorActivate" value="false" />
 	</bean>
 </beans>
