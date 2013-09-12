@@ -124,6 +124,6 @@ public class IssueRequestProcessTest {
 		assertThat(issueTracker.exists(), equalTo(true));
 		assertThat(
 				FileUtils.readFileToString(issueTracker),
-				containsString("Description: When I'm adding articles to the basket and click on 'buy' I'm getting a 404 error. I hate your xxxing shop!"));
+				endsWith("New issue: Website Error! Shop order failed Description: When I'm adding articles to the basket and click on 'buy' I'm getting a 404 error. I hate your xxxing shop! Priority: critical"));
 	}
 }

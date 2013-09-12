@@ -14,8 +14,8 @@ public class PersistIssueTask implements JavaDelegate {
 	@Override
 	public void execute(final DelegateExecution execution) throws Exception {
 		String output = String.format(
-				"(%s) Issue added: %s \tDescription: %s\tPriority: %s",
-				execution.getVariable("summary"), new Date().toString(),
+				"(%s) New issue: %s Description: %s Priority: %s",
+				new Date().toString(), execution.getVariable("summary"),
 				execution.getVariable("description"),
 				execution.getVariable("priority"));
 		FileWriter writer = new FileWriter(issueTracker);
