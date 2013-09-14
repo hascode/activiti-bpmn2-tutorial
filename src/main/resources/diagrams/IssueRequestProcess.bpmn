@@ -14,7 +14,7 @@
       </extensionElements>
     </startEvent>
     <endEvent id="endevent" name="End Event"></endEvent>
-    <userTask id="approveNormalIssue" name="Approve non-critical Issue" activiti:assignee="kermit">
+    <userTask id="approveNormalIssue" name="Approve non-critical Issue" activiti:candidateGroups="itsupport-critical">
       <extensionElements>
         <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" variable="summary" writable="false"></activiti:formProperty>
         <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" variable="description" writable="false"></activiti:formProperty>
@@ -26,7 +26,7 @@
       </extensionElements>
     </userTask>
     <exclusiveGateway id="priorityXorGateway" name="Exclusive Gateway Filtering by Priority"></exclusiveGateway>
-    <userTask id="approveCriticalIssue" name="Approve Critical Issue" activiti:assignee="kermit">
+    <userTask id="approveCriticalIssue" name="Approve Critical Issue" activiti:candidateGroups="itsupport">
       <extensionElements>
         <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" variable="summary" writable="false"></activiti:formProperty>
         <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" variable="description" writable="false"></activiti:formProperty>
@@ -174,7 +174,7 @@ execution.setVariable('description', filteredDescription)
         <omgdi:waypoint x="1112.0" y="194.0"></omgdi:waypoint>
         <omgdi:waypoint x="1160.0" y="195.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="13.0" width="100.0" x="10.0" y="0.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="43.0" x="10.0" y="0.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="requestApprovedFlow" id="BPMNEdge_requestApprovedFlow">
@@ -183,7 +183,7 @@ execution.setVariable('description', filteredDescription)
         <omgdi:waypoint x="730.0" y="99.0"></omgdi:waypoint>
         <omgdi:waypoint x="850.0" y="99.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="13.0" width="100.0" x="10.0" y="0.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="88.0" x="10.0" y="0.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="persistIssueFlow" id="BPMNEdge_persistIssueFlow">
@@ -207,7 +207,7 @@ execution.setVariable('description', filteredDescription)
         <omgdi:waypoint x="962.0" y="194.0"></omgdi:waypoint>
         <omgdi:waypoint x="1160.0" y="195.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="13.0" width="100.0" x="10.0" y="0.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="43.0" x="10.0" y="0.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="joinAfterCriticalApproveFlow" id="BPMNEdge_joinAfterCriticalApproveFlow">
@@ -222,7 +222,7 @@ execution.setVariable('description', filteredDescription)
         <omgdi:waypoint x="730.0" y="259.0"></omgdi:waypoint>
         <omgdi:waypoint x="850.0" y="259.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="13.0" width="100.0" x="10.0" y="0.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="77.0" x="10.0" y="0.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="processSwearWords" id="BPMNEdge_processSwearWords">
