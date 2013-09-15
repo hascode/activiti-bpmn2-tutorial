@@ -14,7 +14,7 @@
       </extensionElements>
     </startEvent>
     <endEvent id="endevent" name="End Event"></endEvent>
-    <userTask id="approveNormalIssue" name="Approve non-critical Issue" activiti:candidateGroups="itsupport-critical">
+    <userTask id="approveNormalIssue" name="Approve non-critical Issue" activiti:candidateGroups="itsupport">
       <extensionElements>
         <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" variable="summary" writable="false"></activiti:formProperty>
         <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" variable="description" writable="false"></activiti:formProperty>
@@ -26,7 +26,7 @@
       </extensionElements>
     </userTask>
     <exclusiveGateway id="priorityXorGateway" name="Exclusive Gateway Filtering by Priority"></exclusiveGateway>
-    <userTask id="approveCriticalIssue" name="Approve Critical Issue" activiti:candidateGroups="itsupport">
+    <userTask id="approveCriticalIssue" name="Approve Critical Issue" activiti:candidateGroups="itsupport-critical">
       <extensionElements>
         <activiti:formProperty id="summary" name="Issue Summary" type="string" expression="${summary}" variable="summary" writable="false"></activiti:formProperty>
         <activiti:formProperty id="description" name="Issue Description" type="string" expression="${description}" variable="description" writable="false"></activiti:formProperty>
@@ -105,14 +105,14 @@ Best regards</activiti:expression>
     <sequenceFlow id="completeAfterDenialFlow" name="complete" sourceRef="denialMailTask" targetRef="endevent"></sequenceFlow>
     <scriptTask id="swearWordFilterScriptTask" name="Swear Word Filter Script Task" scriptFormat="groovy" activiti:autoStoreVariables="true">
       <script>def badwords = 'fuck|bla'
-def replacement = 'xxx'
+				def replacement = 'xxx'
 
-def filteredSummary = summary.replaceAll(badwords, replacement)
-def filteredDescription = description.replaceAll(badwords, replacement)
+				def filteredSummary = summary.replaceAll(badwords, replacement)
+				def filteredDescription = description.replaceAll(badwords, replacement)
 
-execution.setVariable('summary', filteredSummary)
-execution.setVariable('description', filteredDescription)
-</script>
+				execution.setVariable('summary', filteredSummary)
+				execution.setVariable('description', filteredDescription)
+			</script>
     </scriptTask>
     <sequenceFlow id="processSwearWords" sourceRef="startEvent" targetRef="swearWordFilterScriptTask"></sequenceFlow>
     <sequenceFlow id="handleDifferentPrioritiesFlow" sourceRef="swearWordFilterScriptTask" targetRef="priorityXorGateway"></sequenceFlow>

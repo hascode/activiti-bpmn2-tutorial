@@ -17,10 +17,13 @@ import javax.mail.Message;
 import javax.mail.internet.MimeMessage;
 
 import org.activiti.engine.FormService;
+import org.activiti.engine.IdentityService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.form.FormProperty;
 import org.activiti.engine.history.HistoricDetail;
 import org.activiti.engine.history.HistoricFormProperty;
+import org.activiti.engine.identity.Group;
+import org.activiti.engine.identity.User;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -63,16 +66,37 @@ public class IssueRequestProcessTest {
 	@Test
 	@Deployment(resources = "diagrams/IssueRequestProcess.bpmn")
 	public void shouldProcessCriticalIssueRequest() throws Exception {
+		// get a handle on the identity-service
+		IdentityService identityService = activitiRule.getIdentityService();
+
+		// create a new user for an it-support employee
+		User itguy = identityService.newUser("itguy");
+		identityService.saveUser(itguy);
+
+		// create a group it-support for critical issues
+		Group itSupportGroup = identityService.newGroup("itsupport-critical");
+		itSupportGroup.setName("IT Support for Critical Issues");
+		identityService.saveGroup(itSupportGroup);
+
+		// assign the user itguy to the group itsupport-critical
+		identityService.createMembership(itguy.getId(), itSupportGroup.getId());
+
+		// assert that the process definition does exist in the current
+		// environment
 		ProcessDefinition definition = activitiRule.getRepositoryService()
 				.createProcessDefinitionQuery()
 				.processDefinitionKey("issueRequestProcess").singleResult();
 		assertThat(definition, notNullValue());
 
+		// get a handle on the form-service
 		FormService formService = activitiRule.getFormService();
+
+		// assert that our start form has four form fields
 		List<FormProperty> formProps = formService.getStartFormData(
 				definition.getId()).getFormProperties();
 		assertThat(formProps.size(), equalTo(4));
 
+		// fill out the first form's fields
 		Map<String, String> requestFormProps = new HashMap<String, String>();
 		requestFormProps.put(SUMMARY_KEY, SUMMARY_VALUE);
 		requestFormProps.put(DESCRIPTION_KEY, DESCRIPTION_VALUE);
@@ -80,13 +104,19 @@ public class IssueRequestProcessTest {
 		requestFormProps.put("priority", "critical");
 
 		Date startDate = new Date();
+
+		// create a new process instance with given form params
 		ProcessInstance processInstance = formService.submitStartFormData(
 				definition.getId(), requestFormProps);
 		assertThat(processInstance, notNullValue());
 
+		// test the audit process, fetch historic data
 		List<HistoricDetail> historicFormProps = activitiRule
 				.getHistoryService().createHistoricDetailQuery()
 				.formProperties().orderByVariableName().asc().list();
+
+		// assert that the historic data corresponds to the form data that we've
+		// entered
 		assertThat(historicFormProps.size(), equalTo(4));
 		HistoricFormProperty historicSummary = (HistoricFormProperty) historicFormProps
 				.get(0);
@@ -95,32 +125,46 @@ public class IssueRequestProcessTest {
 				equalTo(DESCRIPTION_VALUE));
 		assertThat(historicSummary.getTime(), greaterThan(startDate));
 
+		// assert that the bad-words filter has filtered one bad word and
+		// replaced it with 'xxx'
 		assertThat(
 				(String) activitiRule.getRuntimeService()
 						.getVariable(processInstance.getProcessInstanceId(),
 								DESCRIPTION_KEY),
 				endsWith("I hate your xxxing shop!"));
 
+		// get a handle on the task service
 		TaskService taskService = activitiRule.getTaskService();
+
+		// seach for a task for candidate-group 'itsupport-critical'
 		Task approveCriticalIssueTask = taskService.createTaskQuery()
 				.processInstanceId(processInstance.getProcessInstanceId())
-				.singleResult();
+				.taskCandidateGroup(itSupportGroup.getId()).singleResult();
 		assertThat(approveCriticalIssueTask.getName(),
 				equalTo("Approve Critical Issue"));
+
+		// claim the task for the user 'itguy'
+		taskService.claim(approveCriticalIssueTask.getId(), itguy.getId());
+
+		// approve the request and complete the task
 		Map<String, Object> taskParams = new HashMap<String, Object>();
 		taskParams.put("requestApproved", "true");
 		taskService.complete(approveCriticalIssueTask.getId(), taskParams);
 
+		// now we should have received an email..
 		smtpServer.waitForIncomingEmail(5000L, 1);
 		MimeMessage[] messages = smtpServer.getReceivedMessages();
 		assertThat(messages.length, equalTo(1));
 		MimeMessage mail = messages[0];
+
+		// verify email content
 		assertThat(mail.getSubject(), equalTo("Your inquiry regarding "
 				+ SUMMARY_VALUE));
 		assertThat((String) mail.getContent(), containsString(SUMMARY_VALUE));
 		assertThat(mail.getRecipients(Message.RecipientType.TO)[0].toString(),
 				equalTo("\"someguy@hascode.com\" <someguy@hascode.com>"));
 
+		// assert that the java service-task has written output to the file
 		assertThat(issueTracker.exists(), equalTo(true));
 		assertThat(
 				FileUtils.readFileToString(issueTracker),
