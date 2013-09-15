@@ -63,7 +63,7 @@
           <activiti:string>UTF-8</activiti:string>
         </activiti:field>
         <activiti:field name="text">
-          <activiti:expression>Hi ${initiator},
+          <activiti:expression>Hello ${initiator},
 
 your issue regarding ${summary}has been denied.
 
@@ -86,7 +86,7 @@ Best regards</activiti:expression>
           <activiti:string>UTF-8</activiti:string>
         </activiti:field>
         <activiti:field name="text">
-          <activiti:expression>Hi ${initiator},
+          <activiti:expression>Hello ${initiator},
 
 your issue regarding ${summary} is being processed right now and you'll receive an update regarding this issue soon from our dev team.
 

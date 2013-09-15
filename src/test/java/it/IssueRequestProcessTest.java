@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 import java.io.File;
 import java.util.Date;
@@ -69,6 +70,10 @@ public class IssueRequestProcessTest {
 		// get a handle on the identity-service
 		IdentityService identityService = activitiRule.getIdentityService();
 
+		// create a new user to create a new request
+		User requester = identityService.newUser("Micha Kops");
+		identityService.saveUser(requester);
+
 		// create a new user for an it-support employee
 		User itguy = identityService.newUser("itguy");
 		identityService.saveUser(itguy);
@@ -80,6 +85,9 @@ public class IssueRequestProcessTest {
 
 		// assign the user itguy to the group itsupport-critical
 		identityService.createMembership(itguy.getId(), itSupportGroup.getId());
+
+		// set requester as current user
+		identityService.setAuthenticatedUserId(requester.getId());
 
 		// assert that the process definition does exist in the current
 		// environment
@@ -160,6 +168,7 @@ public class IssueRequestProcessTest {
 		// verify email content
 		assertThat(mail.getSubject(), equalTo("Your inquiry regarding "
 				+ SUMMARY_VALUE));
+		assertThat((String) mail.getContent(), startsWith("Hello Micha Kops,"));
 		assertThat((String) mail.getContent(), containsString(SUMMARY_VALUE));
 		assertThat(mail.getRecipients(Message.RecipientType.TO)[0].toString(),
 				equalTo("\"someguy@hascode.com\" <someguy@hascode.com>"));
