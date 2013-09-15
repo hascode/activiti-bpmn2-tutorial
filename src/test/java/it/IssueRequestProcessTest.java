@@ -74,6 +74,12 @@ public class IssueRequestProcessTest {
 		User requester = identityService.newUser("Micha Kops");
 		identityService.saveUser(requester);
 
+		// create group service and assign the user to it
+		Group serviceGroup = identityService.newGroup("service");
+		identityService.saveGroup(serviceGroup);
+		identityService.createMembership(requester.getId(),
+				serviceGroup.getId());
+
 		// create a new user for an it-support employee
 		User itguy = identityService.newUser("itguy");
 		identityService.saveUser(itguy);
